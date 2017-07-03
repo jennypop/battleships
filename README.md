@@ -1,6 +1,10 @@
-# node-js-sample
+# node-heroku-battleship-bot
 
 A barebones Node.js app using [Express 4](http://expressjs.com/).
+Runs a sample implementation of a battleship bot.
+You will want to add your custom logic in: /src/MyBot.js
+
+The remaining instructions are taken straight from the heroku node sample project.
 
 ## Running Locally
 
