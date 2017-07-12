@@ -6,6 +6,7 @@ function getShipPositions() {
       { StartingSquare: { Row: "G", Column: 1 }, EndingSquare : { Row: "G", Column: 3 } },
       { StartingSquare: { Row: "I", Column: 1 }, EndingSquare : { Row: "I", Column: 2 } },
     ]
+  
 }
 
 function getNextTarget(position) {

@@ -1,8 +1,8 @@
 var chai = require('chai');
 var expect = chai.expect;
 var boardValidator = require('./boardValidator.js');
+var Board = require('./Board.js');
 
-// expect(function).to.throw();
 const correctPositions = [
       { StartingSquare: { Row: "A", Column: 1 }, EndingSquare : { Row: "A", Column: 5 } },
       { StartingSquare: { Row: "C", Column: 1 }, EndingSquare : { Row: "C", Column: 4 } },
@@ -75,7 +75,9 @@ describe('boardValidator', function () {
             expect(() => boardValidator.validateShipPositions(correctPositions)).to.not.throw();
         })
     })
+})
 
+describe('Board', function() {
     describe('getBoard', function() {
         it ('should give empty board for empty positions', function () {
             let emptyBoard = [];
@@ -86,19 +88,20 @@ describe('boardValidator', function () {
                 }
                 emptyBoard.push(row);
             }
-            expect(boardValidator.getBoard([])).to.eql(emptyBoard);
+            expect(Board.getBoard([])).to.eql(emptyBoard);
         })
         it ('should give same board if start and end squares are switched', function () {
             let switchedCorrectPositions = correctPositions.slice(0,4);
             switchedCorrectPositions.push(
                 { StartingSquare: { Row: "I", Column: 2 }, 
-                  EndingSquare : { Row: "I", Column: 1 } }
+                EndingSquare : { Row: "I", Column: 1 } }
             );
-            const result = boardValidator.boardEquals(  boardValidator.getBoard(correctPositions), 
-                                                        boardValidator.getBoard(switchedCorrectPositions));
+            const result = Board.boardEquals(  Board.getBoard(correctPositions), 
+                                                Board.getBoard(switchedCorrectPositions));
             expect(result).to.be.true;
             
         })
     })
-    
 })
+
+    
