@@ -6,15 +6,20 @@ function checkSquare(value, row, col, board) {
     if (board[row][col] != 0) {
         throw new Error(`Overlapping boats at row ${row}, col ${col}!`);
     }
+    const rowAbove = Math.max(row-1, 0);
+    const colLeft = Math.max(col-1, 0);
+    const rowBelow = Math.min(row+1, 9);
+    const colRight = Math.min(col+1, 9);
+
     const adjacentSquares = [
-        board[row-1][col-1], board[row-1][col], board[row-1][col+1], 
-        board[row][col-1],                      board[row][col+1], 
-        board[row+1][col-1], board[row+1][col], board[row+1][col+1] 
+        board[rowAbove][colLeft], board[rowAbove][col], board[rowAbove][colRight], 
+        board[row][colLeft],                            board[row][colRight], 
+        board[rowBelow][colLeft], board[rowBelow][col], board[rowBelow][colRight] 
     ];
     if (adjacentSquares.some(
             (num) => { return typeof num != 'undefined' && num != 0 && num != value;}
         )) {
-        throw new Error(`Adjacent boat placement at row ${row}, col ${col}`);
+        throw new Error(`Adjacent boat placement at row ${row+1}, col ${col+1}`);
     }
 }
 
@@ -27,30 +32,27 @@ function getBoard(positions) {
         }
         board.push(row);
     }
-    for (let k = 1; k <= positions.length; ++k) {
-        const startRow = row2num(positions[k].StartingSquare.Row)-1;
-        const endRow = row2num(positions[k].EndingSquare.Row)-1;
-        const startCol = positions[k].StartingSquare.Column-1;
-        const endCol = positions[k].EndingSquare.Column-1;
+    for (let k = 0; k < positions.length; ++k) {
+        let startRow = row2num(positions[k].StartingSquare.Row)-1;
+        let endRow = row2num(positions[k].EndingSquare.Row)-1;
+        let startCol = positions[k].StartingSquare.Column-1;
+        let endCol = positions[k].EndingSquare.Column-1;
+        const shipNum = k+1;
         if (startCol == endCol) {
-            if (endRow > startRow) {
-                inc = 1;
-            } else {
-                inc = -1;
+            if (endRow <= startRow) {
+                [endRow, startRow] = [startRow, endRow];
             }
-            for (let j = startRow; j <= endRow; j += inc) {
-                checkSquare(k, j, startCol, board);
-                board[j][startCol] = k;
+            for (let j = startRow; j <= endRow; ++j) {
+                checkSquare(shipNum, j, startCol, board);
+                board[j][startCol] = shipNum;
             }
         } else {
-            if (endCol > startCol) {
-                inc = 1;
-            } else {
-                inc = -1;
+            if (endCol <= startCol) {
+                [endCol, startCol] = [startCol, endCol];
             }
-            for (let i = startCol; i <= endCol; i += inc) {
-                checkSquare(k, startRow, i, board);
-                board[startRow][i] = k;
+            for (let i = startCol; i <= endCol; ++i) {
+                checkSquare(shipNum, startRow, i, board);
+                board[startRow][i] = shipNum;
             }
         }   
     }
@@ -62,36 +64,37 @@ function validateShipPositions(positions) {
         throw new Error("Wrong # of ships placed");
     }
     let shipsLeft = [2, 3, 3, 4, 5];
-    for (let index = 0; j < positions.length; ++index) {
+    for (let index = 0; index < positions.length; ++index) {
+        let position = positions[index];
         const startCol = position.StartingSquare.Column;
         const startRow = row2num(position.StartingSquare.Row);
         const endCol = position.EndingSquare.Column;
         const endRow = row2num(position.EndingSquare.Row);
-        const orientation = testHorizontalVertical(positions[index]);
+        const orientation = testHorizontalVertical(position);
 
         if ([startRow, startCol, endRow, endCol].some(
             (num) => {return num < 1 || num > 10;}
         )) {
             throw new Error("Ship placed out of bounds");
         }
-        shipsLeft = updateShipsLeft(shipsLeft, orientation, startRow, endRow, startCol, endCol);
+        updateShipsLeft(shipsLeft, orientation, startRow, endRow, startCol, endCol);
     }
-    if (correctShipSizes.length > 0) {
-        throw new Error("Ships left over to place : " + correctShipSizes.toString())
+    if (shipsLeft.length > 0) {
+        throw new Error("Ships left over to place : " + shipsLeft.toString())
     }
-    getBoard();
+    getBoard(positions);
 }
 
 function updateShipsLeft (shipSizes, orientation, startRow, endRow, startCol, endCol) {
     let shipSize;
-    if (orientation.equals("H")) {
+    if (orientation == "H") {
         shipSize = Math.abs(endCol - startCol)+1;
     } else {
         shipSize = Math.abs(endRow - startRow)+1;
     }
-    const shipSizeIndex = ShipSizes.indexOf(shipSize);
+    const shipSizeIndex = shipSizes.indexOf(shipSize);
     if (shipSizeIndex > -1) {
-        return ShipSizes.splice(shipSizeIndex, 1);
+        shipSizes.splice(shipSizeIndex, 1);
     } else {
         throw new Error("Tried to add an unavailable ship size");
     }
@@ -100,7 +103,7 @@ function updateShipsLeft (shipSizes, orientation, startRow, endRow, startCol, en
 function testHorizontalVertical (position) {
     if (position.StartingSquare.Column == position.EndingSquare.Column) {
         return "V";
-    } else if (pos[j].StartingSquare.Row == pos[j].EndingSquare.Row) {
+    } else if (position.StartingSquare.Row == position.EndingSquare.Row) {
         return "H";
     } else {
         throw new Error("Ships not placed horizontally/vertically");
