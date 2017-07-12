@@ -1,23 +1,28 @@
 function Board() {}
 
+var num2row = function (num) { return String.fromCharCode("A".charCodeAt(0) + num);  }
+
 var row2num = function (letter) { return letter.charCodeAt(0) - "A".charCodeAt(0) + 1; }
 
-var checkSquare = function (value, row, col, board) {
-    if (board[row][col] != 0) {
-        throw new Error(`Overlapping boats at row ${row}, col ${col}!`);
-    }
+var adjacentSquareValues = function (row, col, board) {
     const rowAbove = Math.max(row-1, 0);
     const colLeft = Math.max(col-1, 0);
     const rowBelow = Math.min(row+1, 9);
     const colRight = Math.min(col+1, 9);
 
-    const adjacentSquares = [
+    return [
         board[rowAbove][colLeft], board[rowAbove][col], board[rowAbove][colRight], 
         board[row][colLeft],                            board[row][colRight], 
         board[rowBelow][colLeft], board[rowBelow][col], board[rowBelow][colRight] 
     ];
-    if (adjacentSquares.some(
-            (num) => { return typeof num != 'undefined' && num != 0 && num != value;}
+}
+
+var checkSquare = function (value, row, col, board) {
+    if (board[row][col] != 0) {
+        throw new Error(`Overlapping boats at row ${row}, col ${col}!`);
+    }
+    const adjacentSquares = adjacentSquareValues(row, col, board);
+    if (adjacentSquares.some((num) => { num != 0 && num != value;}
         )) {
         throw new Error(`Adjacent boat placement at row ${row+1}, col ${col+1}`);
     }
@@ -78,6 +83,41 @@ Board.boardEquals = function (board1, board2) {
     return true;
 }
 
+Board.testClear = function (row, col, orientation, shipSize, board) {
+    if (orientation == "H") {
+        for (let i = 0; i < shipSize; ++i) {
+            if (board[row][col+i] != 0) {
+                return false;
+            }
+        }
+    } else {
+        for (let i = 0; i < shipSize; ++i) {
+            if (board[row+i][col] != 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+Board.updateBoardValidSpaces = function (row, col, orientation, shipSize, board) {
+    if (orientation == "H") {
+        for (let i = 0; i < shipSize; ++i) {
+            const rowAbove = Math.max(row-1, 0);
+            const colLeft = Math.max(col+i-1, 0);
+            const rowBelow = Math.min(row+1, 9);
+            const colRight = Math.min(col+i+1, 9);
+            board[rowAbove][colLeft] = 1; board[rowAbove][col+i] = 1; board[rowAbove][colRight] = 1; 
+            board[row][colLeft] = 1; board[row][col+i] = 1; board[row][colRight] = 1; 
+            board[rowBelow][colLeft] = 1; board[rowBelow][col+i] = 1; board[rowBelow][colRight] = 1;
+        }
+        return board;
+    } else {
+        // TO DO
+    }
+}
+
+Board.num2row = num2row;
 Board.row2num = row2num;
 Board.initBoard = initBoard;
 Board.updateBoard = updateBoard;

@@ -1,4 +1,53 @@
+var Board = require('./board.js');
+var Validator = require('./boardValidator.js');
+
 function getShipPositions() {
+  const shipsLeft = [5, 4, 3, 3, 2];
+  let boardValidSpaces = Board.initBoard();
+  let positions = [];
+  for (let i = 0; i < 5; ++i) {
+    const result = place(shipsLeft[i], boardValidSpaces);
+    const newPosition = result.position;
+    boardValidSpaces = result.updatedBoard;
+    positions.push(newPosition);
+  }
+  //Validator.validateShipPositions(positions);
+  return positions;
+}
+
+console.log(getShipPositions());
+
+function place(shipSize, board) {
+  //let orientation = (Math.random() > 0.5) ? "H" : "V";
+  let orientation = "H"; let row, col;
+  let placeFound = false;
+  if (orientation == "H") {
+    while (!placeFound) {
+      col = Math.floor(Math.random() * (11 - shipSize));
+      row = Math.floor(Math.random() * 10);
+      placeFound = Board.testClear(row, col, orientation, shipSize, board);
+    }
+    const updatedBoard = Board.updateBoardValidSpaces(row, col, orientation, shipSize, board);
+    return {  updatedBoard: updatedBoard,
+              position: { StartingSquare: { Row: Board.num2row(row), Column: col }, 
+                          EndingSquare: { Row: Board.num2row(row), Column: col + shipSize-1 }} 
+            };
+  // } else {
+  //   while (!placeFound) {
+  //     let row = Math.floor(Math.random() * (11 - shipSize));
+  //     let col = Math.floor(Math.random() * 10);
+  //     placeFound = Board.testClear(row, col, orientation, shipSize, board);
+  //   }
+  //   return { StartingSquare: { Row: Board.num2row(row), Column: col }, 
+  //            EndingSquare: { Row: Board.num2row(row + shipSize), Column: col } };
+  }
+  
+    
+}
+
+/*
+  
+  
   return [
       { StartingSquare: { Row: "A", Column: 1 }, EndingSquare : { Row: "A", Column: 5 } },
       { StartingSquare: { Row: "C", Column: 1 }, EndingSquare : { Row: "C", Column: 4 } },
@@ -7,7 +56,8 @@ function getShipPositions() {
       { StartingSquare: { Row: "I", Column: 1 }, EndingSquare : { Row: "I", Column: 2 } },
     ]
   
-}
+
+*/
 
 function getNextTarget(position) {
   var column = getNextColumn(position.Column);
