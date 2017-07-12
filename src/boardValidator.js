@@ -18,7 +18,8 @@ function validateShipPositions(positions) {
         if ([startRow, startCol, endRow, endCol].some(
             (num) => {return num < 1 || num > 10;}
         )) {
-            throw new Error("Ship placed out of bounds");
+            console.log(position);
+            throw new Error(`Ship placed out of bounds: StartRow ${startRow}, endrow: ${endRow}, startCol ${startCol}, endCol: ${endCol}`);
         }
         updateShipsLeft(shipsLeft, orientation, startRow, endRow, startCol, endCol);
     }

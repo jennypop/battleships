@@ -11,7 +11,7 @@ function getShipPositions() {
     boardValidSpaces = result.updatedBoard;
     positions.push(newPosition);
   }
-  //Validator.validateShipPositions(positions);
+  Validator.validateShipPositions(positions);
   return positions;
 }
 
@@ -29,8 +29,8 @@ function place(shipSize, board) {
     }
     const updatedBoard = Board.updateBoardValidSpaces(row, col, orientation, shipSize, board);
     return {  updatedBoard: updatedBoard,
-              position: { StartingSquare: { Row: Board.num2row(row), Column: col }, 
-                          EndingSquare: { Row: Board.num2row(row), Column: col + shipSize-1 }} 
+              position: { StartingSquare: { Row: Board.num2row(row), Column: col+1 }, 
+                          EndingSquare: { Row: Board.num2row(row), Column: col + shipSize }} 
             };
   // } else {
   //   while (!placeFound) {
