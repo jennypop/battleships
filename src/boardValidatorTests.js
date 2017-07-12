@@ -71,7 +71,7 @@ describe('boardValidator', function () {
             badBoatList.push(badBoat);
             expect(() => boardValidator.validateShipPositions(badBoatList)).to.throw(/Adjacent/);            
         })
-        xit ('should throw no error for good input', function () {
+        it ('should throw no error for good input', function () {
             expect(() => boardValidator.validateShipPositions(correctPositions)).to.not.throw();
         })
     })
@@ -91,10 +91,13 @@ describe('boardValidator', function () {
         it ('should give same board if start and end squares are switched', function () {
             let switchedCorrectPositions = correctPositions.slice(0,4);
             switchedCorrectPositions.push(
-                { StartingSquare: { Row: "I", Column: 2 }, EndingSquare : { Row: "I", Column: 1 } }
+                { StartingSquare: { Row: "I", Column: 2 }, 
+                  EndingSquare : { Row: "I", Column: 1 } }
             );
-            expect(boardValidator.getBoard(correctPositions)).to.
-            eql(boardValidator.getBoard(switchedCorrectPositions));
+            const result = boardValidator.boardEquals(  boardValidator.getBoard(correctPositions), 
+                                                        boardValidator.getBoard(switchedCorrectPositions));
+            expect(result).to.be.true;
+            
         })
     })
     

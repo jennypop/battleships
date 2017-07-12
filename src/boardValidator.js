@@ -59,6 +59,17 @@ function getBoard(positions) {
     return board;
 }
 
+function boardEquals(board1, board2) {
+    for (i = 0; i < 10; ++i) {
+        for (j = 0; j < 10; ++j) {
+            if ((board1[i][j] == 0) != (board2[i][j] == 0)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 function validateShipPositions(positions) {
     if (positions.length != 5) {
         throw new Error("Wrong # of ships placed");
@@ -112,4 +123,5 @@ function testHorizontalVertical (position) {
 
 BoardValidator.getBoard = getBoard;
 BoardValidator.validateShipPositions = validateShipPositions;
+BoardValidator.boardEquals = boardEquals;
 module.exports = BoardValidator;
