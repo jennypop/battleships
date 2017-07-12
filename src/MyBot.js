@@ -1,5 +1,10 @@
+/*
+  10 Rows from A to J
+  10 columns from 1 to 10
+*/ 
+
 function getShipPositions() {
-    return [
+  return [
       { StartingSquare: { Row: "A", Column: 1 }, EndingSquare : { Row: "A", Column: 5 } },
       { StartingSquare: { Row: "C", Column: 1 }, EndingSquare : { Row: "C", Column: 4 } },
       { StartingSquare: { Row: "E", Column: 1 }, EndingSquare : { Row: "E", Column: 3 } },
