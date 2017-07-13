@@ -4,7 +4,6 @@ var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 var bodyParser = require('body-parser');
 var MyBot = require('./src/MyBot.js');
-var dbInterface = require('./src/dbInterface.js');
 
 app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
@@ -26,10 +25,10 @@ MongoClient.connect(herokuDB, function (err, db) {
     if (err) { return console.dir(err); }
     console.log("Connected to server!");
     
-    dbInterface.dbInit(db);
+    MyBot.dbInit(db);
 
     app.post('/SelectTarget', function(req, res) {
-        var targetPromise = dbInterface.randomFreeSpace(db);
+        var targetPromise = MyBot.selectTarget(req.body, db);
         targetPromise.then((targetlist) => 
             {   target = targetlist[0];
                 res.send({ Row: target.Row, Column: target.Column}); }

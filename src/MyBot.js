@@ -1,5 +1,25 @@
 var Board = require('./board.js');
 var Validator = require('./boardValidator.js');
+var MongoClient = require('mongodb').MongoClient;
+var assert = require('assert');
+
+function dbInit (db) {
+    const board = db.collection('board');
+
+    let spaces = [];
+    for (let i = 0; i < 10; ++i) {
+        for (let j = 1; j <= 10; ++j) {
+            spaces.push( { Row: Board.num2row(i), Column: j , Shot: false, enemyShip: false } );
+        }
+    }
+    board.remove({}, function(err, removed){
+        board.insertMany(spaces, {w: 1}, function (err, result) {
+                assert.equal(null, err);
+                assert.equal(100, result.insertedCount);
+        })
+    })
+    
+}
 
 function getShipPositions() {
   const shipsLeft = [5, 4, 3, 3, 2];
@@ -57,11 +77,22 @@ function getNextColumn(column) {
   return column % 10 + 1;
 }
 
-function selectTarget(gamestate) {  
+function randomFreeSpace (db) {
+    const board = db.collection('board');
+    const randomFreeSpace = board.aggregate([
+        { $match: { Shot: false } },
+        { $sample: { size : 1 } }
+    ]).toArray();
+    
+    return randomFreeSpace;
+}
 
+function selectTarget(gamestate, db) {
+    return randomFreeSpace(db);
 }
 
 module.exports = { 
+  dbInit: dbInit,
   getShipPositions: getShipPositions,
   selectTarget: selectTarget
 };
