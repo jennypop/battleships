@@ -62,7 +62,10 @@ function selectTarget(gamestate) {
   let row = Board.num2row(Math.floor(Math.random() * 10));
   let col = Math.floor(Math.random() * 10) + 1;
   if(previousShot && previousShot.WasHit) {
-     col = Math.min(previousShot.Position.Column + 1, 10);
+    console.log(previousShot);
+    console.log(previousShot.Position.Column);
+    row = previousShot.Position.Row;
+    col = Math.min(previousShot.Position.Column + 1, 10);
   }
   return { Row: row, Column: col };  
 }
