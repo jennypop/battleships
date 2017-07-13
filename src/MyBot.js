@@ -61,11 +61,9 @@ function selectTarget(gamestate) {
   var previousShot = gamestate.MyShots && gamestate.MyShots[gamestate.MyShots.length-1];
   let row = Board.num2row(Math.floor(Math.random() * 10));
   let col = Math.floor(Math.random() * 10) + 1;
-  if(previousShot && previousShot.WasHit) {
-    console.log(previousShot);
-    console.log(previousShot.Position.Column);
+  if(previousShot && previousShot.WasHit && previousShot.Position.Column < 10) {
     row = previousShot.Position.Row;
-    col = Math.min(previousShot.Position.Column + 1, 10);
+    col = Math.min(previousShot.Position.Column + 1);
   }
   return { Row: row, Column: col };  
 }
