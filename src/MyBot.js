@@ -97,13 +97,10 @@ function processResult(gamestate, db) {
   const board = db.collection('board');
   if (gamestate.MyShots && gamestate.MyShots.length > 0) {
     const lastShot = gamestate.MyShots[gamestate.MyShots.length-1];
-    console.log(lastShot);
-    if (lastShot) {
-      board.updateOne({Row: lastShot.Position.Row, Column: lastShot.Position.Column}, 
-          {$set: { Shot: true, enemyShip: lastShot.wasHit }}, 
-          function (err, r) {}
-      );
-    }
+    board.updateOne({Row: lastShot.Position.Row, Column: lastShot.Position.Column}, 
+        {$set: { Shot: true, enemyShip: lastShot.wasHit }}, 
+        function (err, r) {}
+    );
   }
 }
 

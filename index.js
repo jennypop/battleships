@@ -10,11 +10,6 @@ app.use(express.static(__dirname + '/public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.get('/GetShipPositions', function(req, res) {
-    var positions = MyBot.getShipPositions();
-    res.send(positions);
-});
-
 app.listen(app.get('port'), function() {
   console.log("Node app is running at localhost:" + app.get('port'));
 });
@@ -25,12 +20,19 @@ MongoClient.connect(herokuDB, function (err, db) {
     if (err) { return console.dir(err); }
     console.log("Connected to server!");
     
-    MyBot.dbInit(db);
+    app.get('/GetShipPositions', function(req, res) {
+        MyBot.dbInit(db);
+        var positions = MyBot.getShipPositions();
+        res.send(positions);
+    });
 
     app.post('/SelectTarget', function(req, res) {
         var targetPromise = MyBot.selectTarget(req.body, db);
         targetPromise.then((targetlist) => 
-            {   target = targetlist[0];
+            {   if (targetlist.length == 0) {
+                    console.log("ran out of targets!!");
+                }
+                target = targetlist[0];
                 res.send({ Row: target.Row, Column: target.Column}); }
         );
     });
