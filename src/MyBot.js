@@ -79,16 +79,29 @@ function getNextColumn(column) {
 
 function randomFreeSpace (db) {
     const board = db.collection('board');
+
     const randomFreeSpace = board.aggregate([
         { $match: { Shot: false } },
         { $sample: { size : 1 } }
     ]).toArray();
-    
     return randomFreeSpace;
 }
 
 function selectTarget(gamestate, db) {
+    processResult(gamestate, db);
+
     return randomFreeSpace(db);
+}
+
+function processResult(gamestate, db) {
+  const board = db.collection('board');
+  if (gamestate.MyShots && gamestate.MyShots.length > 0) {
+    const lastShot = gamestate.MyShots[gamestate.MyShots.length-1];
+    board.updateOne({Row: lastShot.Position.Row, Column: lastShot.Position.Column}, 
+      {$set: { Shot: true, enemyShip: lastShot.wasHit }}, 
+      function (err, r) {}
+    );
+  }
 }
 
 module.exports = { 
