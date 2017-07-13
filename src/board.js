@@ -107,14 +107,28 @@ Board.updateBoardValidSpaces = function (row, col, orientation, shipSize, board)
             const colLeft = Math.max(col+i-1, 0);
             const rowBelow = Math.min(row+1, 9);
             const colRight = Math.min(col+i+1, 9);
-            board[rowAbove][colLeft] = 1; board[rowAbove][col+i] = 1; board[rowAbove][colRight] = 1; 
-            board[row][colLeft] = 1; board[row][col+i] = 1; board[row][colRight] = 1; 
-            board[rowBelow][colLeft] = 1; board[rowBelow][col+i] = 1; board[rowBelow][colRight] = 1;
+            const thisCol = col+i;
+            const thisRow = row;
+            board[rowAbove][colLeft] = 1; board[rowAbove][thisCol] = 1; board[rowAbove][colRight] = 1; 
+            board[thisRow][colLeft] = 1;  board[thisRow][thisCol] = 1;  board[thisRow][colRight] = 1; 
+            board[rowBelow][colLeft] = 1; board[rowBelow][thisCol] = 1; board[rowBelow][colRight] = 1;
         }
         return board;
     } else {
-        // TO DO
+        for (let i = 0; i < shipSize; ++i) {
+            const rowAbove = Math.max(row+i-1, 0);
+            const colLeft = Math.max(col-1, 0);
+            const rowBelow = Math.min(row+i+1, 9);
+            const colRight = Math.min(col+1, 9);
+            const thisCol = col;
+            const thisRow = row+i;
+            board[rowAbove][colLeft] = 1; board[rowAbove][thisCol] = 1; board[rowAbove][colRight] = 1; 
+            board[thisRow][colLeft] = 1;  board[thisRow][thisCol] = 1;  board[thisRow][colRight] = 1; 
+            board[rowBelow][colLeft] = 1; board[rowBelow][thisCol] = 1; board[rowBelow][colRight] = 1;
+        }
+        return board;
     }
+
 }
 
 Board.num2row = num2row;

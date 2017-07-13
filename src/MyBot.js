@@ -15,34 +15,28 @@ function getShipPositions() {
   return positions;
 }
 
-console.log(getShipPositions());
-
 function place(shipSize, board) {
-  //let orientation = (Math.random() > 0.5) ? "H" : "V";
-  let orientation = "H"; let row, col;
+  let orientation = (Math.random() > 0.5) ? "H" : "V";
+  let row, col;
   let placeFound = false;
-  if (orientation == "H") {
-    while (!placeFound) {
-      col = Math.floor(Math.random() * (11 - shipSize));
-      row = Math.floor(Math.random() * 10);
-      placeFound = Board.testClear(row, col, orientation, shipSize, board);
-    }
-    const updatedBoard = Board.updateBoardValidSpaces(row, col, orientation, shipSize, board);
-    return {  updatedBoard: updatedBoard,
-              position: { StartingSquare: { Row: Board.num2row(row), Column: col+1 }, 
-                          EndingSquare: { Row: Board.num2row(row), Column: col + shipSize }} 
-            };
-  // } else {
-  //   while (!placeFound) {
-  //     let row = Math.floor(Math.random() * (11 - shipSize));
-  //     let col = Math.floor(Math.random() * 10);
-  //     placeFound = Board.testClear(row, col, orientation, shipSize, board);
-  //   }
-  //   return { StartingSquare: { Row: Board.num2row(row), Column: col }, 
-  //            EndingSquare: { Row: Board.num2row(row + shipSize), Column: col } };
-  }
   
-    
+  while (!placeFound) {
+    col = Math.floor(Math.random() * (11 - shipSize));
+    row = Math.floor(Math.random() * 10);
+    if (orientation == "V") {
+      [row, col] = [col, row];
+    }
+    placeFound = Board.testClear(row, col, orientation, shipSize, board);
+  }
+  const updatedBoard = Board.updateBoardValidSpaces(row, col, orientation, shipSize, board);
+  const EndingSquare = (orientation == "H") 
+                        ? { Row: Board.num2row(row), Column: col + shipSize } 
+                        : { Row: Board.num2row(row + shipSize - 1), Column: col+1}
+
+  return {  updatedBoard: updatedBoard,
+            position: { StartingSquare: { Row: Board.num2row(row), Column: col+1 }, 
+                        EndingSquare: EndingSquare } 
+          };
 }
 
 /*
