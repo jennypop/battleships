@@ -11,7 +11,7 @@ function getShipPositions() {
     boardValidSpaces = result.updatedBoard;
     positions.push(newPosition);
   }
-  Validator.validateShipPositions(positions);
+  //Validator.validateShipPositions(positions);
   return positions;
 }
 
@@ -39,20 +39,6 @@ function place(shipSize, board) {
           };
 }
 
-/*
-  
-  
-  return [
-      { StartingSquare: { Row: "A", Column: 1 }, EndingSquare : { Row: "A", Column: 5 } },
-      { StartingSquare: { Row: "C", Column: 1 }, EndingSquare : { Row: "C", Column: 4 } },
-      { StartingSquare: { Row: "E", Column: 1 }, EndingSquare : { Row: "E", Column: 3 } },
-      { StartingSquare: { Row: "G", Column: 1 }, EndingSquare : { Row: "G", Column: 3 } },
-      { StartingSquare: { Row: "I", Column: 1 }, EndingSquare : { Row: "I", Column: 2 } },
-    ]
-  
-
-*/
-
 function getNextTarget(position) {
   var column = getNextColumn(position.Column);
   var row = column === 1 ? getNextRow(position.Row) : position.Row;
@@ -73,10 +59,12 @@ function getNextColumn(column) {
 
 function selectTarget(gamestate) {
   var previousShot = gamestate.MyShots && gamestate.MyShots[gamestate.MyShots.length-1];
-  if(previousShot) {
-    return getNextTarget(previousShot.Position);
+  let row = Board.num2row(Math.floor(Math.random() * 10));
+  let col = Math.floor(Math.random() * 10) + 1;
+  if(previousShot && previousShot.WasHit) {
+    col = previousShot.Position.Column + 1;
   }
-  return { Row: "A", Column: 1 };  
+  return { Row: row, Column: col };  
 }
 
 module.exports = { 
