@@ -19,6 +19,14 @@ function dbInit (db) {
         })
     })
     
+    const tracking = db.init('tracking');
+    tracking.remove({}, function(err, removed){
+      tracking.insertOne(
+        { tracking: false, nextShots: [] , orientation: "", initialSpace: {}}, 
+        function(err, result) {}
+      );
+      
+    })
 }
 
 function getShipPositions() {
@@ -90,18 +98,123 @@ function randomFreeSpace (db) {
 function selectTarget(gamestate, db) {
     processResult(gamestate, db);
 
-    return randomFreeSpace(db);
+    const trackingObj = db.collection('tracking').findOne({});
+    if (trackingObj.tracking) {
+      return trackingObj.nextShots[0];
+    } else {
+      return randomFreeSpace(db);
+    }
 }
 
 function processResult(gamestate, db) {
   const board = db.collection('board');
+  const tracking = db.collection('tracking');
+
   if (gamestate.MyShots && gamestate.MyShots.length > 0) {
     const lastShot = gamestate.MyShots[gamestate.MyShots.length-1];
     board.updateOne({Row: lastShot.Position.Row, Column: lastShot.Position.Column}, 
         {$set: { Shot: true, enemyShip: lastShot.wasHit }}, 
         function (err, r) {}
-    );
+    )
+    let trackingObj = tracking.findOne({});
+    if (trackingObj.tracking) {
+      trackingObj = updateTracking(trackingObj, lastShot);
+      tracking.updateOne({}, {$set: { trackingObj }});
+    } else if (lastShot.wasHit) {
+      trackingObj = { tracking: true, 
+                      nextShots: getFirstTrackingShots(lastShot) , 
+                      orientation: "",
+                      initialSpace: lastShot };
+      tracking.updateOne({}, {$set: { trackingObj }});
+    }
   }
+}
+
+function updateTracking(trackingObj, lastShot) {
+  if (trackingObj.orientation == "" && lastShot.wasHit) {
+    trackingObj.orientation = getOrientation(trackingObj.initialSpace, lastShot);
+    trackingObj.nextShots = [];
+    nextShot1 = getNextShotAlong(trackingObj.initialSpace, lastShot, trackingObj.orientation);
+    nextShot2 = getNextShotAlong(lastShot, trackingObj.initialSpace, trackingObj.orientation);
+    if (nextShot1 != null) {
+      trackingObj.nextShots.push(nextShot1);
+    }
+    if (nextShot2 != null) {
+      trackingObj.nextShots.push(nextShot2);
+    }
+  } else {
+    if (lastShot.wasHit) {
+      nextShot1 = getNextShotAlong(trackingObj.initialSpace, lastShot, trackingObj.orientation);
+      if (nextShot1 != null) {
+        trackingObj.nextShots.push(nextShot1);
+      }
+    }
+    const idxShotRemoved = trackingObj.nextShots.find(
+      (shot) => shot.Column == lastShot.Column && shot.Row == lastShot.Row
+    );
+    trackingObj.nextShots.splice(idxShotRemoved, 1);
+  }
+  return trackingObj;
+}
+
+
+function getOrientation(shot1, shot2) {
+  if (shot1.Column == shot2.Column) {
+    return "V"
+  } else if (shot1.Row == shot2.Row) {
+    return "H"
+  } else {
+    throw new Error("Asked for orientation of "+ shot1 + ", " + shot2);
+  }
+}
+
+function getNextShotAlong(shot1, shot2, orientation) {
+  if (orientation == "H") {
+    if (shot2.Column > shot1.Column) {
+      if (shot2.Column == 10) {
+        return null;
+      } else {
+        return { Row: shot2.Row, Column: shot2.Column + 1 };
+      }
+    } else {
+      if (shot2.Column == 1) {
+        return null;
+      } else {
+        return { Row: shot2.Row, Column: shot2.Column - 1 };
+      }
+    }
+  } else {
+    if (row2num(shot2.Row) > row2num(shot1.Row)) {
+      if (shot2.Row == "J") {
+        return null;
+      } else {
+        return { Row: getNextRow(shot2.Row), Column: shot2.Column };
+      }
+    } else {
+      if (shot2.Row == "A") {
+        return null;
+      } else {
+        return { Row: Board.num2row(Board.row2num(shot2.Row)-1), Column: shot2.Column};
+      }
+    }
+  }
+}
+
+function getFirstTrackingShots(shot) {
+  let shots = [];
+  if (shot.Column < 10) {
+    shots.push({ Row: shot.Row, Column: shot.Column+1 });
+  }
+  if (shot.Column > 1) {
+    shots.push({ Row: shot.Row, Column: shot.Column-1 });
+  }
+  if (shot.Row != "A") {
+    shots.push({ Row: Board.num2Row(Board.row2num(shot.Row-1)), Column: shot.Column });
+  }
+  if (shot.Row != "J") {
+    shots.push({ Row: Board.num2Row(Board.row2num(shot.Row+1)), Column: shot.Column });
+  }
+  return shots;
 }
 
 module.exports = { 
