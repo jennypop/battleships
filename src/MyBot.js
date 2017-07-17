@@ -19,11 +19,14 @@ function dbInit (db) {
         })
     })
     
-    const tracking = db.init('tracking');
+    const tracking = db.collection('tracking');
     tracking.remove({}, function(err, removed){
       tracking.insertOne(
-        { tracking: false, nextShots: [] , orientation: "", initialSpace: {}}, 
-        function(err, result) {}
+        { tracking: false, nextShots: [] , orientation: "", initialSpace: {}, shots: []}, 
+        function (err, result) {
+            assert.equal(null, err);
+            assert.equal(1, result.insertedCount);
+        }
       );
       
     })
@@ -67,23 +70,23 @@ function place(shipSize, board) {
           };
 }
 
-function getNextTarget(position) {
-  var column = getNextColumn(position.Column);
-  var row = column === 1 ? getNextRow(position.Row) : position.Row;
-  return { Row: row, Column: column }
-}
+//function getNextTarget(position) {
+//  var column = getNextColumn(position.Column);
+//  var row = column === 1 ? getNextRow(position.Row) : position.Row;
+//  return { Row: row, Column: column }
+//}
 
-function getNextRow(row) {
-  var newRow = row.charCodeAt(0) + 1;
-  if(newRow > 'J'.charCodeAt(0)) {
-    return 'A';
-  }
-  return String.fromCharCode(newRow);
-}
+//function getNextRow(row) {
+//  var newRow = row.charCodeAt(0) + 1;
+//  if(newRow > 'J'.charCodeAt(0)) {
+//    return 'A';
+//  }
+//  return String.fromCharCode(newRow);
+//}
 
-function getNextColumn(column) {
-  return column % 10 + 1;
-}
+//function getNextColumn(column) {
+//  return column % 10 + 1;
+//}
 
 function randomFreeSpace (db) {
     const board = db.collection('board');
@@ -95,47 +98,80 @@ function randomFreeSpace (db) {
     return randomFreeSpace;
 }
 
-function selectTarget(gamestate, db) {
-    processResult(gamestate, db);
+function selectTarget(gamestate, db, resolve) {
+    processResult(gamestate, db, resolve);
+}
 
-    const trackingObj = db.collection('tracking').findOne({});
-    if (trackingObj.tracking) {
-      return trackingObj.nextShots[0];
+function getNextShot(resolve, trackingObj, db) {
+    if (trackingObj && trackingObj.tracking) {
+        console.log("found trackingObj", trackingObj);
+        if (trackingObj.tracking) {
+            findNewShot(resolve, trackingObj.nextShots, db);
+        }
     } else {
-      return randomFreeSpace(db);
+        resolve(randomFreeSpace(db));
     }
 }
 
-function processResult(gamestate, db) {
+function findNewShot(resolve, list, db) {
+    if (list.length == 0) { throw new Error("ran out of targets");}
+    db.collection('board').findOne({ Row: list[list.length-1].Row, Column: list[list.length-1].Column, Shot: false }, function (err, res) {
+        if (res) {
+            console.log("resolving!");
+            resolve(list[list.length-1]);
+        } else {
+            console.log("sliceing");
+            list.length--;
+            console.log(list);
+            findNewShot(resolve, list, db);
+        }
+    });
+}
+
+function processResult(gamestate, db, resolve) {
   const board = db.collection('board');
   const tracking = db.collection('tracking');
 
   if (gamestate.MyShots && gamestate.MyShots.length > 0) {
-    const lastShot = gamestate.MyShots[gamestate.MyShots.length-1];
+    const lastShot = gamestate.MyShots[gamestate.MyShots.length - 1];
+    console.log(lastShot);
     board.updateOne({Row: lastShot.Position.Row, Column: lastShot.Position.Column}, 
-        {$set: { Shot: true, enemyShip: lastShot.wasHit }}, 
-        function (err, r) {}
+        {$set: { Shot: true, enemyShip: lastShot.WasHit }}, 
+        function (err, r) {
+            tracking.findOne({}, function (err, trackingObj) {
+                if (trackingObj.tracking) {
+                    trackingObj = updateTracking(trackingObj, lastShot);
+                    tracking.updateOne({}, { $set: { trackingObj } }, function (err, r) {
+                        getNextShot(resolve, trackingObj, db);
+                    });
+                } else if (lastShot.WasHit) {
+                    trackingObj = {
+                        tracking: true,
+                        nextShots: getFirstTrackingShots(lastShot.Position),
+                        orientation: "",
+                        initialSpace: lastShot.Position,
+                        shots: [lastShot.Position]
+                    };
+                    console.log("started tracking!", JSON.stringify(trackingObj));
+                    tracking.updateOne({}, { $set: { trackingObj } }, function (err, r) {
+                        getNextShot(resolve, trackingObj, db);
+                    });
+                } else {
+                    getNextShot(resolve, null, db);
+                }
+            })
+        }
     )
-    let trackingObj = tracking.findOne({});
-    if (trackingObj.tracking) {
-      trackingObj = updateTracking(trackingObj, lastShot);
-      tracking.updateOne({}, {$set: { trackingObj }});
-    } else if (lastShot.wasHit) {
-      trackingObj = { tracking: true, 
-                      nextShots: getFirstTrackingShots(lastShot) , 
-                      orientation: "",
-                      initialSpace: lastShot };
-      tracking.updateOne({}, {$set: { trackingObj }});
-    }
   }
 }
 
 function updateTracking(trackingObj, lastShot) {
-  if (trackingObj.orientation == "" && lastShot.wasHit) {
-    trackingObj.orientation = getOrientation(trackingObj.initialSpace, lastShot);
+  trackingObj.shots.push(lastShot.Position);
+  if (trackingObj.orientation == "" && lastShot.WasHit) {
+    trackingObj.orientation = getOrientation(trackingObj.initialSpace, lastShot.Position);
     trackingObj.nextShots = [];
-    nextShot1 = getNextShotAlong(trackingObj.initialSpace, lastShot, trackingObj.orientation);
-    nextShot2 = getNextShotAlong(lastShot, trackingObj.initialSpace, trackingObj.orientation);
+    nextShot1 = getNextShotAlong(trackingObj.initialSpace, lastShot.Position, trackingObj.orientation);
+    nextShot2 = getNextShotAlong(lastShot.Position, trackingObj.initialSpace, trackingObj.orientation);
     if (nextShot1 != null) {
       trackingObj.nextShots.push(nextShot1);
     }
@@ -143,14 +179,14 @@ function updateTracking(trackingObj, lastShot) {
       trackingObj.nextShots.push(nextShot2);
     }
   } else {
-    if (lastShot.wasHit) {
-      nextShot1 = getNextShotAlong(trackingObj.initialSpace, lastShot, trackingObj.orientation);
+    if (lastShot.WasHit) {
+        nextShot1 = getNextShotAlong(trackingObj.initialSpace, lastShot.Position, trackingObj.orientation);
       if (nextShot1 != null) {
         trackingObj.nextShots.push(nextShot1);
       }
     }
     const idxShotRemoved = trackingObj.nextShots.find(
-      (shot) => shot.Column == lastShot.Column && shot.Row == lastShot.Row
+      (shot) => shot.Column == lastShot.Position.Column && shot.Row == lastShot.Position.Row
     );
     trackingObj.nextShots.splice(idxShotRemoved, 1);
   }
@@ -209,10 +245,10 @@ function getFirstTrackingShots(shot) {
     shots.push({ Row: shot.Row, Column: shot.Column-1 });
   }
   if (shot.Row != "A") {
-    shots.push({ Row: Board.num2Row(Board.row2num(shot.Row-1)), Column: shot.Column });
+    shots.push({ Row: Board.num2row(Board.row2num(shot.Row)-2), Column: shot.Column });
   }
   if (shot.Row != "J") {
-    shots.push({ Row: Board.num2Row(Board.row2num(shot.Row+1)), Column: shot.Column });
+    shots.push({ Row: Board.num2row(Board.row2num(shot.Row)), Column: shot.Column });
   }
   return shots;
 }

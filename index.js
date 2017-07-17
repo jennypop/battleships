@@ -16,10 +16,11 @@ app.listen(app.get('port'), function() {
 
 const localDB = "mongodb://localhost:27017/exampleDb";
 const herokuDB = "mongodb://heroku_c5pkfdd9:engufdrjjiuekeig6u7igvaroq@ds157712.mlab.com:57712/heroku_c5pkfdd9";
-MongoClient.connect(herokuDB, function (err, db) {
+MongoClient.connect(localDB, function (err, db) {
     if (err) { return console.dir(err); }
     console.log("Connected to server!");
-    
+    MyBot.dbInit(db);
+
     app.get('/GetShipPositions', function(req, res) {
         MyBot.dbInit(db);
         var positions = MyBot.getShipPositions();
@@ -27,13 +28,10 @@ MongoClient.connect(herokuDB, function (err, db) {
     });
 
     app.post('/SelectTarget', function(req, res) {
-        var targetPromise = MyBot.selectTarget(req.body, db);
-        targetPromise.then((targetlist) => 
-            {   if (targetlist.length == 0) {
-                    console.log("ran out of targets!!");
-                }
-                target = targetlist[0];
-                res.send({ Row: target.Row, Column: target.Column}); }
-        );
+        MyBot.selectTarget(req.body, db, function (target) {   
+            console.log("Shooting", target);
+            res.send({ Row: target.Row, Column: target.Column });
+        });
+        
     });
 });

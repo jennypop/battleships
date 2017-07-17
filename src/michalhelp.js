@@ -7,9 +7,9 @@ MongoClient.connect(localDB, function (err, db) {
     if (err) { return console.dir(err); }
     console.log("Connected to server!");
     
-    for (var i = 0; i < 100; i++) {
+    //for (var i = 0; i < 100; i++) {
        runGame(50, db)
-    }
+    //}
 });
 
 
